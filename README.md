@@ -35,6 +35,8 @@ The command takes the following required arguments:
 
 It also takes the following optional arguments:
 * the path/filename of the secrets file to copy into the Docker container (`-s` argument)
+* the port to use for the app (`-p` argument, default is port 80)
+* the path to add to the base URL for the app (`-u` argument)
 
 ```
 Usage: ../stdockerize.sh -d <output dockerfile> -m <output makefile>  -n <dockername> [-s <secrets file .json>] <streamlit app .py>
@@ -54,6 +56,8 @@ The inputs are
   -s <secrets file .json> : (Optional) A json file of secrets to be included into the Docker image. 
                               If specified, this file will be accessible in the Docker image 
                               at /tmp/secrets.json.
+  -p <port>               : Port to use for the app (default is 80)
+  -u <baseUrlPath>        : Base URL path to add to URL
   <streamlit app .py>     : The filename of the Streamlit app Python file 
                               (e.g. the argument you would provide to 'streamlit run')
 ```
