@@ -116,7 +116,7 @@ fi
 ## Optionally add baseUrlPath
 if [ -n "$baseUrlPath" ]; then
 cat >> $dockerfile << EOM
-ENTRYPOINT [ "python3", "-m", "streamlit", "run", "$app_py", "--server.port=$port", "--server.address=0.0.0.0" "--server.baseUrlPath=$baseUrlPath" ]
+ENTRYPOINT [ "python3", "-m", "streamlit", "run", "$app_py", "--server.port=$port", "--server.address=0.0.0.0", "--server.baseUrlPath=$baseUrlPath" ]
 EOM
 else
 cat >> $dockerfile << EOM
