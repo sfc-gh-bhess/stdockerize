@@ -1,7 +1,7 @@
 #!/bin/bash
 
 read -r -d '' USAGE << EOM
-Usage: $0 -d <output dockerfile> -m <output makefile>  -n <dockername> [-s <secrets file .json>] <streamlit app .py>
+Usage: $0 -d <output dockerfile> -m <output makefile>  -n <dockername> [-s <secrets file .json> -p <port> -u <baseUrlPath> -k <platform>] <streamlit app .py>
 
 This program will produce a Docker file and a make file that can be used to create a Docker 
 container for your Streamlit app. You can run the 'docker' target in the produced make file 
@@ -12,7 +12,7 @@ app. The directory should have the Python files, but also a requirements.txt fil
 prerequisites.
 
 The inputs are
-  -f <output dockerfile>  : The name of the Docker file to create
+  -d <output dockerfile>  : The name of the Docker file to create
   -m <output makefile>    : The name of the make file to create
   -n <dockername>         : The name of the Docker image to create
   -s <secrets file .json> : (Optional) A json file of secrets to be included into the Docker image. 
@@ -20,12 +20,12 @@ The inputs are
                               at /tmp/secrets.json.
   -p <port>               : Port to use for the app (default is 80)
   -u <baseUrlPath>        : Base URL path to add to URL
+  -k <platform>           : Platform to build image for (default is to build for local architecture)
+                              (if set, Makefile will contain an additional target (docker_native) 
+                               to build the image for the local architecture)
   <streamlit app .py>     : The filename of the Streamlit app Python file 
                               (e.g. the argument you would provide to 'streamlit run')
 EOM
-
-# Parse args
-# stdockerize.sh <output dockerfile> <output makefile> <streamlit app .py> <dockername> <secrets file .json>
 
 dockerfile=""
 makefile=""
@@ -34,6 +34,7 @@ app_py=""
 secrets=""
 port="80"
 baseUrlPath=""
+platform=""
 
 while [ $# -gt 1 ]
 do
@@ -49,6 +50,8 @@ do
         -p) port="$2"
             shift;;
         -u) baseUrlPath="$2"
+            shift;;
+        -k) platform="$2"
             shift;;
         *) echo "Error: $1 is not an option."
             echo "$USAGE"
@@ -134,22 +137,31 @@ DOCKERIMAGENAME=$dockername
 
 run:
 ${TAB}docker run -p $port:$port \$(DOCKERIMAGENAME)
-
 EOM
 
 ## Optionally add secrets
+secretsCmd=""
 if [ -n "$secrets" ]; then
+    secretsCmd="--secret id=secrets,src=$secrets"
+fi
+platformEnv=""
+if [ -n "$platform" ]; then
+    platformEnv="DOCKER_DEFAULT_PLATFORM=$platform "
 cat >> $makefile << EOM
-docker:
-${TAB}DOCKER_BUILDKIT=1 docker build -f $dockerfile --no-cache --progress=plain --secret id=secrets,src=$secrets -t \$(DOCKERIMAGENAME) .
-EOM
-else
-cat >> $makefile << EOM
-docker:
-${TAB}DOCKER_BUILDKIT=1 docker build -f $dockerfile --no-cache --progress=plain -t \$(DOCKERIMAGENAME) .
+
+docker_native:
+${TAB}DOCKER_BUILDKIT=1 docker build -f $dockerfile --no-cache --progress=plain $secretsCmd -t \$(DOCKERIMAGENAME) .
 EOM
 fi
+cat >> $makefile << EOM
+
+docker:
+${TAB}${platformEnv}DOCKER_BUILDKIT=1 docker build -f $dockerfile --no-cache --progress=plain $secretsCmd -t \$(DOCKERIMAGENAME) .
+EOM
 
 echo "Docker file ($dockerfile) created. Makefile ($makefile) created. Feel free to edit or customize as needed."
 echo "To make the Docker image run: make -f $makefile docker"
+if [ -n "$platform" ]; then 
+    echo "To make the Docker image for the local architecture run: make -f $makefile docker_native"
+fi
 echo "Then you can run the image with: make -f $makefile run"

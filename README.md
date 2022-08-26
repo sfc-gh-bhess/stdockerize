@@ -39,7 +39,7 @@ It also takes the following optional arguments:
 * the path to add to the base URL for the app (`-u` argument)
 
 ```
-Usage: ../stdockerize.sh -d <output dockerfile> -m <output makefile>  -n <dockername> [-s <secrets file .json>] <streamlit app .py>
+Usage: ../stdockerize.sh -d <output dockerfile> -m <output makefile>  -n <dockername> [-s <secrets file .json> -p <port> -u <baseUrlPath> -k <platform>] <streamlit app .py>
 
 This program will produce a Docker file and a make file that can be used to create a Docker 
 container for your Streamlit app. You can run the 'docker' target in the produced make file 
@@ -50,7 +50,7 @@ app. The directory should have the Python files, but also a requirements.txt fil
 prerequisites.
 
 The inputs are
-  -f <output dockerfile>  : The name of the Docker file to create
+  -d <output dockerfile>  : The name of the Docker file to create
   -m <output makefile>    : The name of the make file to create
   -n <dockername>         : The name of the Docker image to create
   -s <secrets file .json> : (Optional) A json file of secrets to be included into the Docker image. 
@@ -58,6 +58,9 @@ The inputs are
                               at /tmp/secrets.json.
   -p <port>               : Port to use for the app (default is 80)
   -u <baseUrlPath>        : Base URL path to add to URL
+  -k <platform>           : Platform to build image for (default is to build for local architecture)
+                              (if set, Makefile will contain an additional target (docker_native) 
+                               to build the image for the local architecture)
   <streamlit app .py>     : The filename of the Streamlit app Python file 
                               (e.g. the argument you would provide to 'streamlit run')
 ```
